@@ -1,0 +1,21 @@
+{
+  "name": "aula01",
+  "version": "1.0.0",
+  "description": "Aula 01 de websockets",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Erick Lima",
+  "license": "ISC",
+  "dependencies": {
+    "loadsh": "^0.0.4"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "eslint": "^9.19.0",
+    "globals": "^15.14.0"
+  }
+}
