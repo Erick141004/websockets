@@ -17,10 +17,6 @@ export const server = createServer((req, res) => {
             res.writeHead(200);
             res.end(`Olá ${url.searchParams.get('usuario')}`);
             break;
-        case '/':
-            res.writeHead(200);
-            res.end(`Olá BCC`);
-            break;
         case '/arquivosync':
             res.writeHead(200);
             const arquivoSync = readFileSync("./index.js");
@@ -37,6 +33,10 @@ export const server = createServer((req, res) => {
                 }
             })
             break;    
+        case '/':
+            res.writeHead(200);
+            res.end(`Olá BCC`);
+            break;
         default:
             res.writeHead(404);
             res.end("Deu ruim");
