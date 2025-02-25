@@ -8,11 +8,8 @@ const tasks = [
 ];
 
 notificator.on('aguardando', (dado) => {
-    if(dado !== ""){
-        console.log("Tarefas aguardando: ", dado);
-    } else {
-        console.log("Nenhuma tarefa em aguardo");
-    }
+    const ids = dado.ids.map(t => t.id).join(', ');
+    console.log("Tarefas aguardando: ", ids);
 });
 
 notificator.on('trabalhando', (dado) => {
@@ -27,44 +24,54 @@ notificator.on('trabalhando', (dado) => {
 });
 
 notificator.on('finalizado', (dado) => {
-    let tasksFinalizadas = '';
-    if(dado.dadosAnteriores && dado.dadoAlterado){
-        dado.dadoAlterado.status = 'finalizado';
-        tasksFinalizadas = dado.dadosAnteriores + ', ' + dado.dadoAlterado.descricao;
-        console.log("Finalizado: ", tasksFinalizadas)
-    } else if(dado.dadoAlterado){
-        dado.dadoAlterado.status = 'finalizado';
-        tasksFinalizadas = dado.dadoAlterado.descricao;
-        console.log("Finalizado: ", tasksFinalizadas);
-    } else if(dado.dadosAnteriores){
-        tasksFinalizadas = dado.dadosAnteriores.descricao;
-        console.log("Finalizado: ", tasksFinalizadas);
+    const tasksFinalizadas = tasks.filter(t => t.status === 'finalizado');
+
+    if(tasksFinalizadas.length > 0){
+        const idsFinalizados = tasksFinalizadas.map(t => t.descricao).join(", ");
+
+        if(dado){
+            dado.tarefa.status = "finalizado";
+            console.log(`Tarefas finalizadas:  ${idsFinalizados}, ${dado.tarefa.descricao}`);
+        } else {
+            console.log(`Tarefas finalizadas: ${idsFinalizados}`);
+        }
+    } else if (dado){
+        dado.tarefa.status = "finalizado";
+        console.log(`Tarefas finalizadas: ${dado.tarefa.descricao}`);
     }
+    
 });
 
 function gerenciadorTarefas(){
+    const indexTrabalhando = tasks.findIndex(t => t.status === 'trabalhando');
+    if(indexTrabalhando === -1){
+        console.log("Todas as tarefas foram processadas");
+        return;
+    }
+    
     const random = Math.random();
     console.log('Numero sorteado: ', random.toFixed(2));
     const mudaTarefa = random > 0.7;
-
-    const indexTrabalhando = tasks.findIndex(t => t.status === 'trabalhando');
-    const proxTarefa = tasks.find(t => t.status === 'aguardando')
     
-    const tasksAguardando = tasks.filter(t => t.status === 'aguardando');
-    const ids = tasksAguardando.map(t => t.id).join(', ');
-
-    const tasksFinalizadas = tasks.filter(t => t.status === 'finalizado');
-    const idsFinalizados = tasksFinalizadas.map(t => t.descricao).join(", ");
-
     if(mudaTarefa){
-        notificator.emit('trabalhando', {novaTarefa: proxTarefa});
-        notificator.emit('aguardando', ids.replace(`${proxTarefa.id}, `, ' '));
-        notificator.emit('finalizado', {dadoAlterado: tasks[indexTrabalhando], dadosAnteriores: idsFinalizados});
+        notificator.emit('finalizado', {tarefa: tasks[indexTrabalhando]});
+        
+        const proxTarefa = tasks.find(t => t.status === 'aguardando')
+        if(proxTarefa){
+            notificator.emit('trabalhando', {novaTarefa: proxTarefa});
+        }
     } else {
+        notificator.emit('finalizado', null);
         notificator.emit('trabalhando', {mesmaTarefa: tasks[indexTrabalhando]});
-        notificator.emit('aguardando', ids);
-        notificator.emit('finalizado', {dadosAnteriores: idsFinalizados});
     }
+
+    const tasksAguardando = tasks.filter(t => t.status === 'aguardando');
+    if(tasksAguardando.length > 0){
+        notificator.emit('aguardando', {ids: tasksAguardando});
+    }
+
+    console.log("\n-----------------------------");
+    console.log("Tarefas: ", tasks);
 }
 
 setInterval(gerenciadorTarefas, 5000);
