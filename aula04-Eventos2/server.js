@@ -10,6 +10,15 @@ const servers = [{
     history: [],
     criticalSince: null,  
     lastUpdate: Date.now() 
+},
+{
+    id: 2,
+    name: "API-Server-02",
+    temperature: 40,
+    status: "normal",
+    history: [],
+    criticalSince: null,  
+    lastUpdate: Date.now() 
 }]
 
 statusEmitter.on('temperature-update', (server) => {
@@ -24,7 +33,8 @@ statusEmitter.on('temperature-update', (server) => {
     if (server.history.length > 5) {
         server.history.pop(); 
     }
-    console.log(server.history)
+
+    console.log(server.history);
 });
 
 statusEmitter.on('status-change', (element) => {
@@ -32,7 +42,7 @@ statusEmitter.on('status-change', (element) => {
         element.server.status = element.status; 
     else if(element.server.temperature <= 45)
         element.server.status = "normal";
-    else if(element.server.temperature >= 45 && element.server.temperature <= 45){
+    else if(element.server.temperature >= 45 && element.server.temperature <= 55){
         element.server.status = "atencao";
         element.server.criticalSince = null;
     }
@@ -53,18 +63,19 @@ statusEmitter.on('server-recovered', (server) => {
 statusEmitter.on('critical-alert', (server) => {
     if(server.criticalSince === null)
         server.criticalSince = Date.now();
-    console.log(`${formatTimestamp(server.lastUpdate)} ${server.name}: ${server.temperature} (CRITICO) - Desde: ${formatTimestamp(server.criticalSince)}`);
+    console.log(`${formatTimestamp(server.server.lastUpdate)} ${server.server.name}: ${server.server.temperature} ${server.tendencia} (CRITICO) - Desde: ${formatTimestamp(server.server.criticalSince)}
+                \n--------------------- Media de Temperatura do Servidor ${server.media.toFixed(2)}`);
 });
 
 statusEmitter.on('trend-detected', () => {
-    
+    console.log("Tendecia detectada");
 });
 
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
     
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Mês começa em 0
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     
     const hours = String(date.getHours()).padStart(2, '0');
@@ -95,6 +106,7 @@ function gerenciadorServidores(){
         const random = Math.random();
         const serverOn = random < 0.9;
 
+        console.log(`\n\nNumero sorteado: ${random.toFixed(2)} ----------\n`);
         if(serverOn){
             if(element.status === "OFFLINE"){
                 statusEmitter.emit('server-recovered', element);
@@ -110,15 +122,17 @@ function gerenciadorServidores(){
                 statusEmitter.emit('trend-detected');
 
             if(element.status === "critico"){
-                statusEmitter.emit('critical-alert', element);
+                statusEmitter.emit('critical-alert', {server: element, tendencia: trendText, media: mediaTemp});
             } else {
                 console.log(`${formatTimestamp(element.lastUpdate)} ${element.name}: ${element.temperature} (${element.status}) ${trendText}
-                     \n---------------------- Media de Temperatura do Servidor ${mediaTemp}`);
+                     \n--------------------- Media de Temperatura do Servidor ${mediaTemp.toFixed(2)}`);
             }
         } else {
             statusEmitter.emit('status-change', {server: element, status: 'OFFLINE'});
-            statusEmitter.emit('server-offline', {element})
+            statusEmitter.emit('server-offline', element)
         }
+
+        console.log(`\n-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n`);
     });
 }
 
